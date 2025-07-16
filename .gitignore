@@ -1,0 +1,53 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+/.idea/
+/.idea/
+/bishop-prototype/.mvn/
+/synthetic-human-core-starter/.mvn/
+/bishop-prototype/.gitattributes
+/bishop-prototype/.gitignore
+/bishop-prototype/HELP.md
+/bishop-prototype/mvnw
+/bishop-prototype/mvnw.cmd
+/bishop-prototype/target/
+/synthetic-human-core-starter/.gitattributes
+/synthetic-human-core-starter/.gitignore
+/synthetic-human-core-starter/HELP.md
+/synthetic-human-core-starter/mvnw
+/synthetic-human-core-starter/mvnw.cmd
