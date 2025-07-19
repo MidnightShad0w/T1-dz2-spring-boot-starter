@@ -1,35 +1,41 @@
 package com.danila.synthetichumancorestarter.autoconfig;
 
-import com.danila.synthetichumancorestarter.application.CommandDispatcher;
-import com.danila.synthetichumancorestarter.application.CommandQueue;
-import com.danila.synthetichumancorestarter.application.CommandService;
-import com.danila.synthetichumancorestarter.application.CommandValidator;
+import com.danila.synthetichumancorestarter.application.*;
 import com.danila.synthetichumancorestarter.infrastructure.audit.AuditPublisher;
 import com.danila.synthetichumancorestarter.infrastructure.audit.ConsoleAuditPublisher;
 import com.danila.synthetichumancorestarter.infrastructure.audit.KafkaAuditPublisher;
 import com.danila.synthetichumancorestarter.infrastructure.audit.WeylandWatchingYouAspect;
 import com.danila.synthetichumancorestarter.metrics.MetricsService;
+import com.danila.synthetichumancorestarter.metrics.QueueMonitor;
+import com.danila.synthetichumancorestarter.web.GlobalExceptionHandler;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 @AutoConfiguration
-@EnableConfigurationProperties({QueueProperties.class, AuditProperties.class})
+@EnableScheduling
+@EnableConfigurationProperties({QueueProperties.class, AuditProperties.class, QueueMonitorProperties.class})
 public class SyntheticHumanCoreAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    CommandQueue commandQueue(QueueProperties props) {
-        return new CommandQueue(props.capacity());
+    CommandQueue commandQueue(QueueProperties p) {
+        return new CommandQueue(p.criticalThreads(), p.capacity());
     }
 
     @Bean
     ExecutorService criticalExecutor(QueueProperties props) {
-        return Executors.newFixedThreadPool(props.criticalThreads());
+        return new ThreadPoolExecutor(
+                props.criticalThreads(), props.criticalThreads(),
+                0L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                (r, executor) -> {
+                    throw new QueueOverflowException("queue capacity exceeded");
+                });
     }
 
     @Bean
@@ -42,6 +48,19 @@ public class SyntheticHumanCoreAutoConfiguration {
     @ConditionalOnMissingBean
     CommandService commandService(CommandDispatcher d, CommandValidator v) {
         return new CommandService(d, v);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    CommandDispatcher dispatcher(CommandQueue q,
+                                 ExecutorService criticalEx,
+                                 MetricsService metrics) {
+        return new CommandDispatcher(q, criticalEx, metrics);
+    }
+
+    @Bean
+    GlobalExceptionHandler globalExceptionHandler() {
+        return new GlobalExceptionHandler();
     }
 
     // audit
@@ -70,10 +89,10 @@ public class SyntheticHumanCoreAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    CommandDispatcher dispatcher(CommandQueue q,
-                                 ExecutorService ex,
-                                 MetricsService metrics) {
-        return new CommandDispatcher(q, ex, metrics);
+    QueueMonitor queueMonitor(CommandQueue q,
+                              MetricsService metrics,
+                              QueueMonitorProperties props) {
+        return new QueueMonitor(q, metrics, props);
     }
+
 }

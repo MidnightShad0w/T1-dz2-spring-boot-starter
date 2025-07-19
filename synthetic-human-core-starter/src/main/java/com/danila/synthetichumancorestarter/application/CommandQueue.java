@@ -1,20 +1,34 @@
 package com.danila.synthetichumancorestarter.application;
 
-import com.danila.synthetichumancorestarter.domain.Command;
-
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class CommandQueue {
-    private final BlockingQueue<Command> delegate;
 
-    public CommandQueue(int capacity) { this.delegate = new ArrayBlockingQueue<>(capacity); }
+    private final ThreadPoolExecutor delegate;
 
-    public void enqueue(Command cmd) {
-        if (!delegate.offer(cmd)) {
+    public CommandQueue(int poolSize, int capacity) {
+        this.delegate =
+                new ThreadPoolExecutor(
+                        poolSize, poolSize,
+                        0L, TimeUnit.MILLISECONDS,
+                        new ArrayBlockingQueue<>(capacity),
+                        (r, executor) -> {
+                            throw new QueueOverflowException("queue capacity exceeded");
+                        });
+    }
+
+    public void submit(Runnable task) {
+        try {
+            delegate.execute(task);
+        } catch (RejectedExecutionException ex) {
             throw new QueueOverflowException("queue capacity exceeded");
         }
     }
-    public Command take() throws InterruptedException { return delegate.take(); }
-    public int size() { return delegate.size(); }
+
+    public int size() {
+        return delegate.getQueue().size();
+    }
 }

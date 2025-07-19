@@ -10,6 +10,9 @@ public class CommandValidator {
         if (cmd.description() == null || cmd.description().isBlank())
             throw new ValidationException("Description is empty");
 
+        if (cmd.description().length() > 1000)
+            throw new ValidationException("description length > 1000");
+
         if (cmd.author() == null || cmd.author().length() > 100)
             throw new ValidationException("Author length > 100");
 
@@ -18,6 +21,9 @@ public class CommandValidator {
 
         if (cmd.createdAt().isAfter(Instant.now()))
             throw new ValidationException("createdAt is in the future");
+
+        if (cmd.priority() == null)
+            throw new ValidationException("priority is required (COMMON|CRITICAL)");
     }
 
     private static final Pattern AUTHOR_PATTERN =
