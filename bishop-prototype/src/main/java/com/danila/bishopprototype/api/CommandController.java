@@ -21,7 +21,7 @@ public class CommandController {
     }
 
     @PostMapping
-//    @WeylandWatchingYou
+    @WeylandWatchingYou
     public ResponseEntity<Void> create(@RequestBody NewCommandDto dto) {
         service.accept(dto.toCommand());
         return ResponseEntity.accepted().build();

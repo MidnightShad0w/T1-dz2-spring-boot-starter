@@ -9,10 +9,12 @@ import com.danila.synthetichumancorestarter.metrics.MetricsService;
 import com.danila.synthetichumancorestarter.metrics.QueueMonitor;
 import com.danila.synthetichumancorestarter.web.GlobalExceptionHandler;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.concurrent.*;
@@ -68,11 +70,12 @@ public class SyntheticHumanCoreAutoConfiguration {
     @ConditionalOnMissingBean
     AuditPublisher auditPublisher(
             AuditProperties props,
-            org.springframework.beans.factory.ObjectProvider<org.springframework.kafka.core.KafkaTemplate<String, String>> kafkaProvider) {
+            ObjectProvider<KafkaTemplate<String, String>> kafkaProvider) {
 
         if (props.getMode() == AuditProperties.Mode.KAFKA) {
-            var kt = kafkaProvider.getIfAvailable();
-            return new KafkaAuditPublisher(kt, props.getTopic());
+            return new KafkaAuditPublisher(
+                    kafkaProvider.getIfAvailable(),
+                    props.getTopic());
         }
         return new ConsoleAuditPublisher();
     }
