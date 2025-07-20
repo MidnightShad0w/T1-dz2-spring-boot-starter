@@ -38,16 +38,8 @@ build/
 .DS_Store
 /.idea/
 /.idea/
-/bishop-prototype/.mvn/
-/synthetic-human-core-starter/.mvn/
 /bishop-prototype/.gitattributes
-/bishop-prototype/.gitignore
 /bishop-prototype/HELP.md
-/bishop-prototype/mvnw
-/bishop-prototype/mvnw.cmd
 /bishop-prototype/target/
 /synthetic-human-core-starter/.gitattributes
-/synthetic-human-core-starter/.gitignore
 /synthetic-human-core-starter/HELP.md
-/synthetic-human-core-starter/mvnw
-/synthetic-human-core-starter/mvnw.cmd
