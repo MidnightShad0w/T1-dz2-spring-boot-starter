@@ -10,23 +10,32 @@ import com.danila.synthetichumancorestarter.metrics.QueueMonitor;
 import com.danila.synthetichumancorestarter.web.GlobalExceptionHandler;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 @AutoConfiguration
 @EnableScheduling
+@ComponentScan
 @EnableConfigurationProperties({QueueProperties.class, AuditProperties.class, QueueMonitorProperties.class})
 public class SyntheticHumanCoreAutoConfiguration {
-    @Bean
-    @ConditionalOnMissingBean
-    CommandQueue commandQueue(QueueProperties p) {
-        return new CommandQueue(p.criticalThreads(), p.capacity());
+    @Bean("commonQueue")
+    CommandQueue commonQueue(QueueProperties p) {
+        return new CommandQueue("COMMON", p.commonThreads(), p.capacity());
+    }
+
+    @Bean("criticalQueue")
+    CommandQueue criticalQueue(QueueProperties p) {
+        return new CommandQueue("CRITICAL", p.criticalThreads(), p.capacity());
     }
 
     @Bean
@@ -54,10 +63,10 @@ public class SyntheticHumanCoreAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    CommandDispatcher dispatcher(CommandQueue q,
-                                 ExecutorService criticalEx,
+    CommandDispatcher dispatcher(@Qualifier("commonQueue") CommandQueue commonQ,
+                                 @Qualifier("criticalQueue") CommandQueue criticalQ,
                                  MetricsService metrics) {
-        return new CommandDispatcher(q, criticalEx, metrics);
+        return new CommandDispatcher(commonQ, criticalQ, metrics);
     }
 
     @Bean
@@ -87,15 +96,15 @@ public class SyntheticHumanCoreAutoConfiguration {
 
     // metrics
     @Bean
-    MetricsService metricsService(MeterRegistry reg, CommandQueue queue) {
-        return new MetricsService(reg, queue);
+    MetricsService metricsService(MeterRegistry reg, List<QueueReader> queues) {
+        return new MetricsService(reg, queues);
     }
 
     @Bean
-    QueueMonitor queueMonitor(CommandQueue q,
+    QueueMonitor queueMonitor(List<QueueReader> queues,
                               MetricsService metrics,
                               QueueMonitorProperties props) {
-        return new QueueMonitor(q, metrics, props);
+        return new QueueMonitor(queues, metrics, props);
     }
 
 }

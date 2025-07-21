@@ -5,29 +5,30 @@ import com.danila.synthetichumancorestarter.domain.Command.Priority;
 import com.danila.synthetichumancorestarter.metrics.MetricsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutorService;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 public class CommandDispatcher {
 
+    @Qualifier("commonQueue")
     private final CommandQueue commonQueue;
-    private final ExecutorService criticalExecutor;
+    @Qualifier("criticalQueue")
+    private final CommandQueue criticalQueue;
     private final MetricsService metrics;
 
     private static final Logger log = LoggerFactory.getLogger(CommandDispatcher.class);
 
     public CommandDispatcher(CommandQueue commonQueue,
-                             ExecutorService criticalExecutor,
+                             CommandQueue criticalQueue,
                              MetricsService metrics) {
         this.commonQueue = commonQueue;
-        this.criticalExecutor = criticalExecutor;
+        this.criticalQueue = criticalQueue;
         this.metrics = metrics;
     }
 
     public void dispatch(Command cmd) {
         Runnable task = () -> execute(cmd);
         if (cmd.priority() == Priority.CRITICAL) {
-            criticalExecutor.submit(task);
+            criticalQueue.submit(task);
         } else {
             commonQueue.submit(task);
         }

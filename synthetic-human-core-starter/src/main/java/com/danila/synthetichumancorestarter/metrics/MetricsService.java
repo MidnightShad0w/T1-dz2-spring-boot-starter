@@ -1,10 +1,11 @@
 package com.danila.synthetichumancorestarter.metrics;
 
-import com.danila.synthetichumancorestarter.application.CommandQueue;
+import com.danila.synthetichumancorestarter.application.QueueReader;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -15,11 +16,13 @@ public class MetricsService {
     private final MeterRegistry registry;
     private final ConcurrentMap<String, Counter> perAuthor = new ConcurrentHashMap<>();
 
-    public MetricsService(MeterRegistry registry, CommandQueue queue) {
+    public MetricsService(MeterRegistry registry, List<QueueReader> queues) {
         this.registry = registry;
-        Gauge.builder("command_queue_size", queue::size)
-                .description("Current number of commands in queue")
-                .register(registry);
+        queues.forEach(q ->
+                Gauge.builder("command_queue_size", q::size)
+                        .description("Commands in queue")
+                        .tag("queue", q.name())
+                        .register(registry));
     }
 
     public void incrementCompleted(String author) {

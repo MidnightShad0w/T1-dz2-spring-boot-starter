@@ -5,11 +5,13 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class CommandQueue {
+public class CommandQueue implements QueueReader{
 
+    private final String name;
     private final ThreadPoolExecutor delegate;
 
-    public CommandQueue(int poolSize, int capacity) {
+    public CommandQueue(String name, int poolSize, int capacity) {
+        this.name = name;
         this.delegate =
                 new ThreadPoolExecutor(
                         poolSize, poolSize,
@@ -30,5 +32,10 @@ public class CommandQueue {
 
     public int size() {
         return delegate.getQueue().size();
+    }
+
+    @Override
+    public String name() {
+        return name;
     }
 }
