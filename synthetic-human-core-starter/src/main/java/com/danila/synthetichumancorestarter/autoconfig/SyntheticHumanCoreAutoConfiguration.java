@@ -30,12 +30,12 @@ import java.util.concurrent.*;
 public class SyntheticHumanCoreAutoConfiguration {
     @Bean("commonQueue")
     CommandQueue commonQueue(QueueProperties p) {
-        return new CommandQueue("COMMON", p.commonThreads(), p.capacity());
+        return new CommandQueue("COMMON", p.commonThreads(), p.commonCapacity());
     }
 
     @Bean("criticalQueue")
     CommandQueue criticalQueue(QueueProperties p) {
-        return new CommandQueue("CRITICAL", p.criticalThreads(), p.capacity());
+        return new CommandQueue("CRITICAL", p.criticalThreads(), p.criticalCapacity());
     }
 
     @Bean
